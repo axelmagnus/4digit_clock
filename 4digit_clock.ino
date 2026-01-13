@@ -33,7 +33,7 @@ const byte digitLUT[10] = {
 };
 
 byte frame[4] = {0, 0, 0, 0};             // per-digit segment masks
-const unsigned int segmentPulseUs = 1000; // on-time per lit segment; tweak 300–800 for brightness/flicker
+const unsigned int segmentPulseUs = 1000; // on-time per lit segment; raise for brightness
 const int scanRepeats = 4;                // how many full multiplex passes per loop for brightness
 bool colonState = false;                  // toggled when a time message is received
 int lastDisplayedValue = -1;              // track HHMM to avoid redundant updates
@@ -47,11 +47,6 @@ void connectWiFi();
 
 void setup()
 {
-    connectWiFi();
-
-    // Configure timezone for Europe/Stockholm (CET/CEST with DST rules)
-    configTzTime("CET-1CEST,M3.5.0/2,M10.5.0/3", "pool.ntp.org", "time.nist.gov");
-
     for (int p : segPins)
     {
         pinMode(p, OUTPUT);
@@ -72,6 +67,11 @@ void setup()
         pinMode(p, OUTPUT);
         digitalWrite(p, HIGH);
     }
+
+    connectWiFi();
+
+    // Configure timezone for Europe/Stockholm (CET/CEST with DST rules)
+    configTzTime("CET-1CEST,M3.5.0/2,M10.5.0/3", "pool.ntp.org", "time.nist.gov");
 
     showNumber(0); // start at 0000
 }
@@ -180,8 +180,13 @@ void connectWiFi()
     WiFi.mode(WIFI_STA);
     WiFi.begin(WIFI_SSID, WIFI_PASS);
     unsigned long start = millis();
+    int wifistate = LOW;
     while (WiFi.status() != WL_CONNECTED && millis() - start < 10000)
     {
-        delay(100);
+        // drive colon pins directly based on colonState
+        digitalWrite(colonCathodes[0], wifistate);
+        digitalWrite(colonPins[0], !wifistate);
+        wifistate = !wifistate;
+        delay(500);
     }
 }
