@@ -33,8 +33,8 @@ const byte digitLUT[10] = {
 };
 
 byte frame[4] = {0, 0, 0, 0};             // per-digit segment masks
-const unsigned int segmentPulseUs = 1000; // on-time per lit segment; raise for brightness
-const int scanRepeats = 4;                // how many full multiplex passes per loop for brightness
+const unsigned int segmentPulseUs = 1200; // on-time per lit segment; raise for brightness
+const int scanRepeats = 1;                // how many full multiplex passes per loop for brightness
 bool colonState = false;                  // toggled when a time message is received
 int lastDisplayedValue = -1;              // track HHMM to avoid redundant updates
 int lastMinute = -1;                      // last minute shown to decide updates
@@ -68,12 +68,14 @@ void setup()
         digitalWrite(p, HIGH);
     }
 
+
+    showNumber(8888); // start at 0000
+    scanOnceOneSegmentAtATime();
+    
     connectWiFi();
 
     // Configure timezone for Europe/Stockholm (CET/CEST with DST rules)
     configTzTime("CET-1CEST,M3.5.0/2,M10.5.0/3", "pool.ntp.org", "time.nist.gov");
-
-    showNumber(0); // start at 0000
 }
 
 void loop()
@@ -114,7 +116,7 @@ void updateFromRTC()
 {
     static unsigned long lastPollMs = 0;
     unsigned long nowMs = millis();
-    if (nowMs - lastPollMs < 500)
+    if (nowMs - lastPollMs < 1000)
     {
         return; // limit polling
     }
@@ -170,7 +172,7 @@ void scanOnceOneSegmentAtATime()
         digitalWrite(digitPins[d], HIGH); // disable cathode
 
         // tiny blanking delay to reduce ghosting between digits
-        delayMicroseconds(50);
+        //delayMicroseconds(50);
     }
 }
 
